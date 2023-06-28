@@ -17,7 +17,12 @@ class Place(models.Model):
 
 
 class Image(models.Model):
-    name = models.CharField(verbose_name='Имя картинки', max_length=200)
+    position = models.SmallIntegerField(
+        verbose_name='Позиция',
+        default=0,
+        blank=False,
+        null=False,
+    )
     image_field = models.ImageField(verbose_name='Файл изображения')
     place = models.ForeignKey(
         Place,
@@ -29,8 +34,9 @@ class Image(models.Model):
     )
 
     class Meta:
+        ordering = ['position']
         verbose_name = 'Фото'
         verbose_name_plural = 'Фотографии'
 
     def __str__(self):
-        return f'{self.id} {self.place}'
+        return f'{self.position} {self.place}'
