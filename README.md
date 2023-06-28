@@ -4,8 +4,8 @@
 
 ![screenshot site](https://github.com/Stranix/where_to_go/blob/master/static/promo.jpg?raw=true)
 
-[Демка сайта](https://devmanorg.github.io/where-to-go-frontend/).  
-[Демка админки сайта](https://devmanorg.github.io/where-to-go-frontend/).
+[Демка сайта](https://stranix.pythonanywhere.com/).  
+[Демка админки сайта](https://stranix.pythonanywhere.com/admin/).
 
 ## Как запустить
 
