@@ -1,13 +1,17 @@
+from django.core.files.temp import NamedTemporaryFile
+from django.core.files import File
+import urllib
+from urllib.request import urlopen
 from django.db import models
 from tinymce.models import HTMLField
 
 
 class Place(models.Model):
-    title = models.CharField(verbose_name='Название', max_length=200)
+    title = models.CharField(verbose_name='Название', max_length=200, unique=True)
     description_short = models.TextField(verbose_name='Краткое описание')
     description_long = HTMLField(verbose_name='Полное Описание')
-    lng = models.FloatField(verbose_name='Координаты - Долгота')
-    lat = models.FloatField(verbose_name='Координаты - Широта')
+    lng = models.FloatField(verbose_name='Координаты - Долгота', null=True)
+    lat = models.FloatField(verbose_name='Координаты - Широта', null=True)
 
     class Meta:
         verbose_name = 'Место'
@@ -33,6 +37,22 @@ class Image(models.Model):
         null=True,
         blank=True
     )
+
+    def get_remote_image(self, url: str):
+        if not self.image_field:
+            img_temp = NamedTemporaryFile()
+            img_temp.write(urlopen(url).read())
+            img_temp.flush()
+            self.image_field.save(
+                self.get_image_name_from_url(url),
+                File(img_temp)
+            )
+        self.save()
+
+    def get_image_name_from_url(self, url: str) -> str:
+        split_result = urllib.parse.urlsplit(url)
+        url_path = split_result.path
+        return url_path.split('/')[-1]
 
     class Meta:
         ordering = ['position']
