@@ -1,9 +1,7 @@
 import os
 import sys
-import urllib
+import json
 import requests
-from django.core.files import File
-from django.core.files.temp import NamedTemporaryFile
 
 from django.core.management.base import BaseCommand
 
@@ -13,13 +11,24 @@ from places.models import Image
 
 class Command(BaseCommand):
     help = 'Загрузка информации о новых местах'
+    places_received = []
 
     def handle(self, *args, **options):
-        if options['link']:
-            self.download_new_place_from_url(options['link'])
+        try:
+            if options['link']:
+                self.download_new_place_from_url(options['link'])
+                self.add_place_with_images_in_db()
 
-        if options['folder']:
-            self.download_new_place_from_folder(options['folder'])
+            if options['folder']:
+                self.download_new_place_from_folder(options['folder'])
+                self.add_place_with_images_in_db()
+        except requests.exceptions.HTTPError:
+            print('Не смог загрузить файл. Проверьте ссылку и попробуйте еще')
+            sys.exit()
+        except FileNotFoundError:
+            err_message = 'Ничего не нашел, проверьте папку {}'\
+                          .format(options['folder'])
+            print(err_message)
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -36,18 +45,33 @@ class Command(BaseCommand):
         )
 
     def download_new_place_from_url(self, url: str):
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            received_place = response.json()
+        response = requests.get(url)
+        response.raise_for_status()
+        self.places_received.append(response.json())
 
+    def download_new_place_from_folder(self, root_folder: str):
+        places_json = []
+
+        for root, dirs, files in os.walk(root_folder):
+            places_json = [os.path.join(root, name) for name in files
+                           if (name.split('.')[-1]) == 'json']
+
+        if not places_json:
+            raise FileNotFoundError
+
+        for json_path in places_json:
+            with open(json_path, 'r', encoding='utf-8') as json_file:
+                self.places_received.append(json.load(json_file))
+
+    def add_place_with_images_in_db(self):
+        for received_place in self.places_received:
             place, created = Place.objects.get_or_create(
                 title=received_place['title']
             )
 
             if not created:
-                print('Место уже существует в бд')
-                sys.exit()
+                print(f'Место {place.title} уже существует в бд')
+                continue
 
             place.description_short = received_place['description_short']
             place.description_long = received_place['description_short']
@@ -55,29 +79,7 @@ class Command(BaseCommand):
             place.lat = received_place['coordinates']['lat']
             place.save()
 
-            for position, image_url in enumerate(received_place['imgs'],
-                                                 start=1):
+            for position, image_url in enumerate(received_place['imgs'], start=1):
                 image = Image.objects.create(position=position)
                 image.get_remote_image(image_url)
                 place.images.add(image)
-        except requests.exceptions.HTTPError:
-            print('Не смог загрузить файл. Проверьте ссылку и попробуйте еще')
-            sys.exit()
-
-    def download_new_place_from_folder(self, root_folder: str):
-        self.check_exist_folder(root_folder)
-
-        place_jsons = []
-
-        for root, dirs, files in os.walk(root_folder):
-            place_jsons = [os.path.join(root, name) for name in files if (name.split('.')[-1]) == 'json']
-
-        if not place_jsons:
-            print(f'Не нашел в папке {root_folder} json файлы')
-            sys.exit()
-
-    def check_exist_folder(self, folder: str):
-        if not os.path.exists(folder):
-            print('А нет такой папки')
-            sys.exit()
-        

@@ -1,13 +1,16 @@
-from django.core.files.temp import NamedTemporaryFile
-from django.core.files import File
-import urllib
-from urllib.request import urlopen
 from django.db import models
+from django.core.files import File
+from django.core.files.temp import NamedTemporaryFile
+
+from urllib import parse
+from urllib.request import urlopen
+
 from tinymce.models import HTMLField
 
 
 class Place(models.Model):
-    title = models.CharField(verbose_name='Название', max_length=200, unique=True)
+    title = models.CharField(verbose_name='Название', max_length=200,
+                             unique=True)
     description_short = models.TextField(verbose_name='Краткое описание')
     description_long = HTMLField(verbose_name='Полное Описание')
     lng = models.FloatField(verbose_name='Координаты - Долгота', null=True)
@@ -50,7 +53,7 @@ class Image(models.Model):
         self.save()
 
     def get_image_name_from_url(self, url: str) -> str:
-        split_result = urllib.parse.urlsplit(url)
+        split_result = parse.urlsplit(url)
         url_path = split_result.path
         return url_path.split('/')[-1]
 
