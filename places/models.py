@@ -1,6 +1,5 @@
 from django.db import models
-from django.core.files import File
-from django.core.files.temp import NamedTemporaryFile
+from django.core.files.base import ContentFile
 
 from urllib import parse
 from urllib.request import urlopen
@@ -56,12 +55,9 @@ class Image(models.Model):
 
     def get_remote_image(self, url: str):
         if not self.upload:
-            img_temp = NamedTemporaryFile()
-            img_temp.write(urlopen(url).read())
-            img_temp.flush()
             self.upload.save(
                 self.get_image_name_from_url(url),
-                File(img_temp)
+                ContentFile(urlopen(url).read())
             )
         self.save()
 
