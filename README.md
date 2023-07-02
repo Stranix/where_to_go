@@ -7,8 +7,6 @@
 
 [Демка сайта](https://stranix.pythonanywhere.com/).  
 [Демка админки сайта](https://stranix.pythonanywhere.com/admin/).
-Данные для входа в демо админку:  
-_Login: demo  Pass: demo1234_
 
 ## Как запустить
 
