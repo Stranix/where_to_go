@@ -8,6 +8,20 @@
 [Демка сайта](https://stranix.pythonanywhere.com/).  
 [Демка админки сайта](https://stranix.pythonanywhere.com/admin/).
 
+
+## Доступные переменные окружения
+`SECRET_KEY` - секретный ключ проекта. Сгенерировать можно [здесь](https://djecrety.ir/).  
+`DEBUG` - Режим работы локального сервера. По умолчанию `True`.  
+`ALLOWED_HOSTS` - Список разрешенных хостов. Подробности [тут](https://docs.djangoproject.com/en/4.2/ref/settings/#allowed-hosts).  
+`STATIC_URL` - Папка со статикой. По умолчанию `static/`.  
+`STATIC_ROOT` - Папка для статики на **prod** сервере. По умолчанию `assets/`.  
+`MEDIA_URL` - Папка с медия файлами. По умолчанию `media/`.  
+`MEDIA_ROOT` - Расположение папки media для **dev(runserver)** сервера. По умолчанию `media/`.
+
+_При использовании локального сервера **обязательно** требуется переменная окружения `SECRET_KEY`_  
+На **prod** сервере обязательное заполнение `SECRET_KEY`, `DEBUG=False`, `ALLOWED_HOSTS` 
+
+
 ## Как запустить
 
 * Скачайте код
@@ -44,19 +58,6 @@ python3 manage.py createsuperuser
 ```
 * Перейти по адресу [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin)
 
-
-
-## Доступные переменные окружения
-`SECRET_KEY` - секретный ключ проекта. Сгенерировать можно [здесь](https://djecrety.ir/).  
-`DEBUG` - Режим работы локального сервера. По умолчанию `True`.  
-`ALLOWED_HOSTS` - Список разрешенных хостов. Подробности [тут](https://docs.djangoproject.com/en/4.2/ref/settings/#allowed-hosts).  
-`STATIC_URL` - Папка со статикой. По умолчанию `static/`.  
-`STATIC_ROOT` - Папка для статики на **prod** сервере. По умолчанию `assets/`.  
-`MEDIA_URL` - Папка с медия файлами. По умолчанию `media/`.  
-`MEDIA_ROOT` - Расположение папки media для **dev(runserver)** сервера. По умолчанию `media/`.
-
-_При использовании локального сервера переменные окружения можно не использовать._  
-На **prod** сервере обязательное заполнение `SECRET_KEY`, `DEBUG=False`, `ALLOWED_HOSTS`   
 
 <a href="#" id="data-sources"></a>
 
