@@ -14,10 +14,22 @@ class Place(models.Model):
         max_length=200,
         unique=True
     )
-    description_short = models.TextField(verbose_name='Краткое описание')
-    description_long = HTMLField(verbose_name='Полное Описание')
-    lng = models.FloatField(verbose_name='Координаты - Долгота', null=True)
-    lat = models.FloatField(verbose_name='Координаты - Широта', null=True)
+    description_short = models.TextField(
+        verbose_name='Краткое описание',
+        blank=True
+    )
+    description_long = HTMLField(
+        verbose_name='Полное Описание',
+        blank=True
+    )
+    lng = models.FloatField(
+        verbose_name='Координаты - Долгота',
+        null=True
+    )
+    lat = models.FloatField(
+        verbose_name='Координаты - Широта',
+        null=True
+    )
 
     class Meta:
         verbose_name = 'Место'
@@ -31,8 +43,6 @@ class Image(models.Model):
     position = models.SmallIntegerField(
         verbose_name='Позиция',
         default=0,
-        blank=False,
-        null=False,
     )
     image_field = models.ImageField(verbose_name='Файл изображения')
     place = models.ForeignKey(
