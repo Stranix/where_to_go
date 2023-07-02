@@ -57,9 +57,8 @@ class Image(models.Model):
         if not self.upload:
             self.upload.save(
                 self.get_image_name_from_url(url),
-                ContentFile(urlopen(url).read())
+                ContentFile(urlopen(url).read()),
             )
-        self.save()
 
     def get_image_name_from_url(self, url: str) -> str:
         split_result = parse.urlsplit(url)
