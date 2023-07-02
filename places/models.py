@@ -44,7 +44,7 @@ class Image(models.Model):
         verbose_name='Позиция',
         default=0,
     )
-    image_field = models.ImageField(verbose_name='Файл изображения')
+    upload = models.ImageField(verbose_name='Файл изображения')
     place = models.ForeignKey(
         Place,
         on_delete=models.SET_NULL,
@@ -55,11 +55,11 @@ class Image(models.Model):
     )
 
     def get_remote_image(self, url: str):
-        if not self.image_field:
+        if not self.upload:
             img_temp = NamedTemporaryFile()
             img_temp.write(urlopen(url).read())
             img_temp.flush()
-            self.image_field.save(
+            self.upload.save(
                 self.get_image_name_from_url(url),
                 File(img_temp)
             )
