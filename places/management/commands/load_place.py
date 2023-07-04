@@ -3,7 +3,10 @@ import sys
 import json
 import requests
 
+from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
+
+from urllib import parse
 
 from places.models import Place
 from places.models import Image
@@ -26,8 +29,8 @@ class Command(BaseCommand):
             print('Не смог загрузить файл. Проверьте ссылку и попробуйте еще')
             sys.exit()
         except FileNotFoundError:
-            err_message = 'Ничего не нашел, проверьте папку {}'\
-                          .format(options['folder'])
+            err_message = 'Ничего не нашел, проверьте папку {}' \
+                .format(options['folder'])
             print(err_message)
 
     def add_arguments(self, parser):
@@ -66,7 +69,9 @@ class Command(BaseCommand):
     def add_place_with_images_in_db(self):
         for received_place in self.places_received:
             place, created = Place.objects.get_or_create(
-                title=received_place['title']
+                title=received_place['title'],
+                lng=received_place['coordinates']['lng'],
+                lat=received_place['coordinates']['lat'],
             )
 
             if not created:
@@ -75,11 +80,31 @@ class Command(BaseCommand):
 
             place.description_short = received_place['description_short']
             place.description_long = received_place['description_short']
-            place.lng = received_place['coordinates']['lng']
-            place.lat = received_place['coordinates']['lat']
             place.save()
 
-            for position, image_url in enumerate(received_place['imgs'], start=1):
+            for position, image_url in enumerate(received_place['imgs'],
+                                                 start=1):
+                image_content_file = self.get_content_file_from_url(image_url)
+
+                if not image_content_file:
+                    continue
+
                 image = Image.objects.create(position=position)
-                image.get_remote_image(image_url)
+                image_name = self.get_image_name_from_url(image_url)
+                image.picture.save(image_name, image_content_file)
                 place.images.add(image)
+
+    def get_content_file_from_url(self, url: str) -> ContentFile | None:
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            return ContentFile(response.content)
+        except requests.exceptions.HTTPError:
+            print('Не смог загрузить файл')
+        except requests.exceptions.ConnectTimeout:
+            print('Проблема с соединением, не смог скачать файл')
+
+    def get_image_name_from_url(self, url: str) -> str:
+        split_result = parse.urlsplit(url)
+        url_path = split_result.path
+        return url_path.split('/')[-1]
