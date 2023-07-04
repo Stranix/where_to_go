@@ -18,7 +18,7 @@ class ImageInline(SortableTabularInline):
     def get_preview(self, obj):
         return format_html(
             '<img src="{url}" width="{width}" />'.format(
-                url=obj.upload.url,
+                url=obj.picture.url,
                 width=200,
             )
         )

@@ -33,7 +33,7 @@ def show_place(request, pk: int):
     place = get_object_or_404(Place, pk=pk)
     data = {
         'title': place.title,
-        'imgs': [img.upload.url for img in place.images.all()],
+        'imgs': [img.picture.url for img in place.images.all()],
         'description_short': place.description_short,
         'description_long': place.description_long,
         'coordinates': {

@@ -21,14 +21,8 @@ class Place(models.Model):
         verbose_name='Полное Описание',
         blank=True
     )
-    lng = models.FloatField(
-        verbose_name='Координаты - Долгота',
-        null=True
-    )
-    lat = models.FloatField(
-        verbose_name='Координаты - Широта',
-        null=True
-    )
+    lng = models.FloatField(verbose_name='Координаты - Долгота')
+    lat = models.FloatField(verbose_name='Координаты - Широта')
 
     class Meta:
         verbose_name = 'Место'
@@ -43,7 +37,7 @@ class Image(models.Model):
         verbose_name='Позиция',
         default=0,
     )
-    upload = models.ImageField(verbose_name='Файл изображения')
+    picture = models.ImageField(verbose_name='Файл изображения')
     place = models.ForeignKey(
         Place,
         on_delete=models.SET_NULL,
@@ -54,8 +48,8 @@ class Image(models.Model):
     )
 
     def get_remote_image(self, url: str):
-        if not self.upload:
-            self.upload.save(
+        if not self.picture:
+            self.picture.save(
                 self.get_image_name_from_url(url),
                 ContentFile(urlopen(url).read()),
             )
