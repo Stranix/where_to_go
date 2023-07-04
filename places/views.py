@@ -7,9 +7,7 @@ from places.models import Place
 
 
 def show_index(request):
-    places = {'type': 'FeatureCollection'}
     features = []
-
     for place in Place.objects.all():
         features.append(
             {
@@ -25,13 +23,18 @@ def show_index(request):
                 }
             }
         )
-    places['features'] = features
-    return render(request, 'index.html', context={'places': places})
+    context = {
+        'places': {
+            'type': 'FeatureCollection',
+            'features': features
+        }
+    }
+    return render(request, 'index.html', context=context)
 
 
 def show_place(request, pk: int):
     place = get_object_or_404(Place, pk=pk)
-    data = {
+    place_serialize = {
         'title': place.title,
         'imgs': [img.picture.url for img in place.images.all()],
         'description_short': place.description_short,
@@ -42,6 +45,6 @@ def show_place(request, pk: int):
         }
     }
     return JsonResponse(
-        data,
+        place_serialize,
         json_dumps_params={'ensure_ascii': False, 'indent': 2},
     )
