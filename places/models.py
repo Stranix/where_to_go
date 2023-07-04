@@ -1,7 +1,4 @@
 from django.db import models
-
-from urllib.request import urlopen
-
 from tinymce.models import HTMLField
 
 
