@@ -1,7 +1,5 @@
 from django.db import models
-from django.core.files.base import ContentFile
 
-from urllib import parse
 from urllib.request import urlopen
 
 from tinymce.models import HTMLField
@@ -46,18 +44,6 @@ class Image(models.Model):
         null=True,
         blank=True
     )
-
-    def get_remote_image(self, url: str):
-        if not self.picture:
-            self.picture.save(
-                self.get_image_name_from_url(url),
-                ContentFile(urlopen(url).read()),
-            )
-
-    def get_image_name_from_url(self, url: str) -> str:
-        split_result = parse.urlsplit(url)
-        url_path = split_result.path
-        return url_path.split('/')[-1]
 
     class Meta:
         ordering = ['position']
