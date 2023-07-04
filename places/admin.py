@@ -15,12 +15,11 @@ class ImageInline(SortableTabularInline):
     list_display = ['image_field', 'get_preview']
     readonly_fields = ['get_preview']
 
-    def get_preview(self, obj):
+    def get_preview(self, image: Image):
         return format_html(
-            '<img src="{url}" width="{width}" />'.format(
-                url=obj.picture.url,
-                width=200,
-            )
+            '<img src="{url}" height="{height}" />',
+            url=image.picture.url,
+            height=200,
         )
 
 
