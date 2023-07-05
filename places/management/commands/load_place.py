@@ -57,18 +57,15 @@ class Command(BaseCommand):
         self.places_received.append(response.json())
 
     def download_new_place_from_folder(self, root_folder: str):
-        places_json = []
-
         for root, dirs, files in os.walk(root_folder):
-            places_json = [os.path.join(root, name) for name in files
-                           if (name.split('.')[-1]) == 'json']
+            for name in files:
+                filename = os.path.join(root, name)
+                place = self.load_json(filename)
+                if place:
+                    self.places_received.append(place)
 
-        if not places_json:
+        if not self.places_received:
             raise FileNotFoundError
-
-        for json_path in places_json:
-            with open(json_path, 'r', encoding='utf-8') as json_file:
-                self.places_received.append(json.load(json_file))
 
     def add_place_with_images_in_db(self):
         for received_place in self.places_received:
@@ -114,3 +111,10 @@ class Command(BaseCommand):
         split_result = urllib.parse.urlsplit(url)
         url_path = split_result.path
         return url_path.split('/')[-1]
+
+    def load_json(self, filename: str) -> dict | None:
+        try:
+            with open(filename, 'r', encoding='utf-8') as json_file:
+                return json.load(json_file)
+        except json.decoder.JSONDecodeError:
+            logger.error('Не смог зачитать файл %s', filename)
