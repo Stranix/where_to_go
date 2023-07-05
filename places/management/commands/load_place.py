@@ -23,11 +23,11 @@ class Command(BaseCommand):
         try:
             if options['link']:
                 self.download_new_place_from_url(options['link'])
-                self.add_place_with_images_in_db()
 
             if options['folder']:
                 self.download_new_place_from_folder(options['folder'])
-                self.add_place_with_images_in_db()
+
+            self.add_place_with_images_in_db()
         except requests.exceptions.HTTPError:
             logger.error(
                 'Не смог загрузить файл. Проверьте ссылку и попробуйте еще',
@@ -71,8 +71,10 @@ class Command(BaseCommand):
         for received_place in self.places_received:
             place, created = Place.objects.get_or_create(
                 title=received_place['title'],
-                lng=received_place['coordinates']['lng'],
-                lat=received_place['coordinates']['lat'],
+                defaults={
+                    'lng': received_place['coordinates']['lng'],
+                    'lat': received_place['coordinates']['lat'],
+                }
             )
 
             if not created:
