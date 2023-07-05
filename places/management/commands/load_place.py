@@ -1,15 +1,18 @@
 import os
 import sys
 import json
+import urllib
+import logging
+
 import requests
 
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 
-from urllib import parse
-
 from places.models import Place
 from places.models import Image
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -26,24 +29,26 @@ class Command(BaseCommand):
                 self.download_new_place_from_folder(options['folder'])
                 self.add_place_with_images_in_db()
         except requests.exceptions.HTTPError:
-            print('Не смог загрузить файл. Проверьте ссылку и попробуйте еще')
+            logger.error(
+                'Не смог загрузить файл. Проверьте ссылку и попробуйте еще',
+            )
             sys.exit()
         except FileNotFoundError:
             folder = options['folder']
-            print(f'Ничего не нашел, проверьте папку {folder}')
+            logger.error('Ничего не нашел, проверьте папку %s', folder)
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--link',
             '-l',
             type=str,
-            help='Ссылка на json нового места для добавления'
+            help='Ссылка на json нового места для добавления',
         )
         parser.add_argument(
             '--folder',
             '-f',
             type=str,
-            help='Ссылка на папку с  json с местами для добавления'
+            help='Ссылка на папку с  json с местами для добавления',
         )
 
     def download_new_place_from_url(self, url: str):
@@ -74,15 +79,17 @@ class Command(BaseCommand):
             )
 
             if not created:
-                print(f'Место {place.title} уже существует в бд')
+                logger.warning(f'Место {place.title} уже существует в бд')
                 continue
 
             place.description_short = received_place['description_short']
             place.description_long = received_place['description_short']
             place.save()
 
-            for position, image_url in enumerate(received_place['imgs'],
-                                                 start=1):
+            for position, image_url in enumerate(
+                    received_place['imgs'],
+                    start=1
+            ):
                 image_content_file = self.get_content_file_from_url(image_url)
 
                 if not image_content_file:
@@ -99,11 +106,11 @@ class Command(BaseCommand):
             response.raise_for_status()
             return ContentFile(response.content)
         except requests.exceptions.HTTPError:
-            print('Не смог загрузить файл')
+            logger.error('Не смог загрузить файл')
         except requests.exceptions.ConnectTimeout:
-            print('Проблема с соединением, не смог скачать файл')
+            logger.error('Проблема с соединением, не смог скачать файл')
 
     def get_image_name_from_url(self, url: str) -> str:
-        split_result = parse.urlsplit(url)
+        split_result = urllib.parse.urlsplit(url)
         url_path = split_result.path
         return url_path.split('/')[-1]

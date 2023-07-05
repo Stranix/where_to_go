@@ -4,8 +4,8 @@ from django.utils.html import format_html
 from adminsortable2.admin import SortableAdminBase
 from adminsortable2.admin import SortableTabularInline
 
-from .models import Place
-from .models import Image
+from places.models import Place
+from places.models import Image
 
 
 class ImageInline(SortableTabularInline):
@@ -16,10 +16,11 @@ class ImageInline(SortableTabularInline):
     readonly_fields = ['get_preview']
 
     def get_preview(self, image: Image):
+        picture_height = 200
         return format_html(
             '<img src="{url}" height="{height}" />',
             url=image.picture.url,
-            height=200,
+            height=picture_height,
         )
 
 

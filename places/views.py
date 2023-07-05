@@ -40,8 +40,8 @@ def show_place(request, pk: int):
         'description_short': place.description_short,
         'description_long': place.description_long,
         'coordinates': {
-            'lng': str(place.lng),
-            'lat': str(place.lat),
+            'lng': place.lng,
+            'lat': place.lat,
         },
     }
     return JsonResponse(

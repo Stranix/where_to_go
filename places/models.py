@@ -6,15 +6,15 @@ class Place(models.Model):
     title = models.CharField(
         verbose_name='Название',
         max_length=200,
-        unique=True
+        unique=True,
     )
     description_short = models.TextField(
         verbose_name='Краткое описание',
-        blank=True
+        blank=True,
     )
     description_long = HTMLField(
         verbose_name='Полное Описание',
-        blank=True
+        blank=True,
     )
     lng = models.FloatField(verbose_name='Координаты - Долгота')
     lat = models.FloatField(verbose_name='Координаты - Широта')
@@ -48,4 +48,8 @@ class Image(models.Model):
         verbose_name_plural = 'Фотографии'
 
     def __str__(self):
-        return f'{self.position} {self.place}'
+        return '{position} {name} {place}'.format(
+            position=self.position,
+            name=self.picture.name,
+            place=self.place
+        )
