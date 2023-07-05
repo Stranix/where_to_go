@@ -27,7 +27,8 @@ class Command(BaseCommand):
             if options['folder']:
                 self.download_new_place_from_folder(options['folder'])
 
-            self.add_place_with_images_in_db()
+            self.add_places_with_images_in_db()
+
         except requests.exceptions.HTTPError:
             logger.error(
                 'Не смог загрузить файл. Проверьте ссылку и попробуйте еще',
@@ -52,69 +53,84 @@ class Command(BaseCommand):
         )
 
     def download_new_place_from_url(self, url: str):
+        logger.info('Получаю информацию о месте из url')
         response = requests.get(url)
         response.raise_for_status()
-        self.places_received.append(response.json())
+        place_serializer = response.json()
+        if place_serializer.get('title'):
+            self.places_received.append(place_serializer)
+            logger.info('Ок. Информация получена')
 
     def download_new_place_from_folder(self, root_folder: str):
+        logger.info('Получаю информацию о месте из файлов в папке')
         for root, dirs, files in os.walk(root_folder):
             for name in files:
                 filename = os.path.join(root, name)
-                place = self.load_json(filename)
-                if place:
-                    self.places_received.append(place)
+                place_serializer = self.load_json(filename)
+                if place_serializer.get('title'):
+                    logger.info('Ок. Информация получена')
+                    self.places_received.append(place_serializer)
 
         if not self.places_received:
             raise FileNotFoundError
 
-    def add_place_with_images_in_db(self):
+    def add_places_with_images_in_db(self):
+        logger.info('Сохраняю информацию о местах с картинками')
         for received_place in self.places_received:
-            place, created = Place.objects.get_or_create(
-                title=received_place['title'],
-                defaults={
-                    'lng': received_place['coordinates']['lng'],
-                    'lat': received_place['coordinates']['lat'],
-                }
-            )
-
-            if not created:
-                logger.warning(f'Место {place.title} уже существует в бд')
-                continue
-
-            place.description_short = received_place['description_short']
-            place.description_long = received_place['description_short']
-            place.save()
-
-            for position, image_url in enumerate(
-                    received_place['imgs'],
-                    start=1
-            ):
-                image_content_file = self.get_content_file_from_url(image_url)
-
-                if not image_content_file:
+            try:
+                place = self.add_place_to_db(received_place)
+                if not received_place.get('imgs'):
+                    logger.warning('Для места %s нет картинок', place.title)
                     continue
+                for image_url in received_place['imgs']:
+                    image = self.add_image_to_db_from_url(image_url)
+                    logger.info('Связываю место и картинку')
+                    place.images.add(image)
+            except KeyError:
+                logger.error('Не могу сохранить, не полная информация о месте')
 
-                image = Image.objects.create(position=position)
-                image_name = self.get_image_name_from_url(image_url)
-                image.picture.save(image_name, image_content_file)
-                place.images.add(image)
+    def add_place_to_db(self, received_place: dict) -> Place:
+        logger.info(
+            'Добавляю информацию о месте %s в базу',
+            received_place['title']
+        )
+        place, _ = Place.objects.get_or_create(
+            title=received_place['title'],
+            defaults={
+                'lng': received_place['coordinates']['lng'],
+                'lat': received_place['coordinates']['lat'],
+                'description_short': received_place.get('description_short', ''),
+                'description_long': received_place.get('description_long', '')
+            }
+        )
+        return place
 
-    def get_content_file_from_url(self, url: str) -> ContentFile | None:
+    def add_image_to_db_from_url(self, image_url: str) -> Image:
+        logger.info('Загружаю информацию о картинке в базе из url')
         try:
-            response = requests.get(url)
+            response = requests.get(image_url)
             response.raise_for_status()
-            return ContentFile(response.content)
+            image, _ = Image.objects.update_or_create(
+                picture=ContentFile(
+                    response.content,
+                    self.get_image_name_from_url(image_url)
+                )
+            )
+            logger.info('Изображение сохранено: %s', image.picture.name)
+            return image
         except requests.exceptions.HTTPError:
             logger.error('Не смог загрузить файл')
         except requests.exceptions.ConnectTimeout:
             logger.error('Проблема с соединением, не смог скачать файл')
 
     def get_image_name_from_url(self, url: str) -> str:
+        logger.info('Получаю имя картинки из url')
         split_result = urllib.parse.urlsplit(url)
         url_path = split_result.path
         return url_path.split('/')[-1]
 
     def load_json(self, filename: str) -> dict | None:
+        logger.info('Зачитываю json file: %s', filename)
         try:
             with open(filename, 'r', encoding='utf-8') as json_file:
                 return json.load(json_file)
