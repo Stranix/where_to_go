@@ -14,20 +14,20 @@ def show_index(request):
                 'type': 'Feature',
                 'geometry': {
                     'type': 'Point',
-                    'coordinates': [place.lng, place.lat]
+                    'coordinates': [place.lng, place.lat],
                 },
                 'properties': {
                     'title': place.title,
                     'placeId': place.id,
-                    'detailsUrl': reverse('show-place', args=[place.id])
-                }
-            }
+                    'detailsUrl': reverse('show-place', args=[place.id]),
+                },
+            },
         )
     context = {
         'places': {
             'type': 'FeatureCollection',
-            'features': features
-        }
+            'features': features,
+        },
     }
     return render(request, 'index.html', context=context)
 
@@ -41,8 +41,8 @@ def show_place(request, pk: int):
         'description_long': place.description_long,
         'coordinates': {
             'lng': str(place.lng),
-            'lat': str(place.lat)
-        }
+            'lat': str(place.lat),
+        },
     }
     return JsonResponse(
         place_serialize,
