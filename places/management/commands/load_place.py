@@ -29,9 +29,8 @@ class Command(BaseCommand):
             print('Не смог загрузить файл. Проверьте ссылку и попробуйте еще')
             sys.exit()
         except FileNotFoundError:
-            err_message = 'Ничего не нашел, проверьте папку {}' \
-                .format(options['folder'])
-            print(err_message)
+            folder = options['folder']
+            print(f'Ничего не нашел, проверьте папку {folder}')
 
     def add_arguments(self, parser):
         parser.add_argument(
