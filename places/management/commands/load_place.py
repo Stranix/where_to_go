@@ -56,20 +56,19 @@ class Command(BaseCommand):
         logger.info('Получаю информацию о месте из url')
         response = requests.get(url)
         response.raise_for_status()
-        place_serializer = response.json()
-        if place_serializer.get('title'):
-            self.places_received.append(place_serializer)
-            logger.info('Ок. Информация получена')
+        self.places_received.append(response.json())
+        logger.info('Ок. Информация получена')
 
     def download_new_place_from_folder(self, root_folder: str):
         logger.info('Получаю информацию о месте из файлов в папке')
         for root, dirs, files in os.walk(root_folder):
             for name in files:
                 filename = os.path.join(root, name)
-                place_serializer = self.load_json(filename)
-                if place_serializer.get('title'):
-                    logger.info('Ок. Информация получена')
-                    self.places_received.append(place_serializer)
+                try:
+                    with open(filename, 'r', encoding='utf-8') as json_file:
+                        self.places_received.append(json.load(json_file))
+                except json.decoder.JSONDecodeError:
+                    logger.error('Не смог зачитать файл %s', filename)
 
         if not self.places_received:
             raise FileNotFoundError
@@ -78,6 +77,8 @@ class Command(BaseCommand):
         logger.info('Сохраняю информацию о местах с картинками')
         for received_place in self.places_received:
             try:
+                if not received_place['title']:
+                    raise KeyError
                 place = self.add_place_to_db(received_place)
                 if not received_place.get('imgs'):
                     logger.warning('Для места %s нет картинок', place.title)
@@ -128,11 +129,3 @@ class Command(BaseCommand):
         split_result = urllib.parse.urlsplit(url)
         url_path = split_result.path
         return url_path.split('/')[-1]
-
-    def load_json(self, filename: str) -> dict | None:
-        logger.info('Зачитываю json file: %s', filename)
-        try:
-            with open(filename, 'r', encoding='utf-8') as json_file:
-                return json.load(json_file)
-        except json.decoder.JSONDecodeError:
-            logger.error('Не смог зачитать файл %s', filename)
